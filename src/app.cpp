@@ -108,27 +108,30 @@ void App::OnFixedUpdate() {
     glm::vec3 forward = glm::normalize(cameraDir);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-    constexpr float SPEED = 1.0f; 
+    float speed = 1.0f;
+    if (Input::Pressed(sge::Key::LeftCtrl)) {
+        speed *= 0.01f;
+    }
 
     if (Input::Pressed(sge::Key::W)) {
-        m_camera_pos += cameraDir * SPEED * dt;
+        m_camera_pos += cameraDir * speed * dt;
     }
     if (Input::Pressed(sge::Key::S)) {
-        m_camera_pos -= cameraDir * SPEED * dt;
+        m_camera_pos -= cameraDir * speed * dt;
     }
     if (Input::Pressed(sge::Key::D)) {
         glm::vec3 right = glm::cross(forward, up);
-        m_camera_pos += right * SPEED * dt;
+        m_camera_pos += right * speed * dt;
     }
     if (Input::Pressed(sge::Key::A)) {
         glm::vec3 right = glm::cross(forward, up);
-        m_camera_pos -= right * SPEED * dt;
+        m_camera_pos -= right * speed * dt;
     }
     if (Input::Pressed(sge::Key::Space)) {
-        m_camera_pos += up * SPEED * dt;
+        m_camera_pos += up * speed * dt;
     }
     if (Input::Pressed(sge::Key::LeftShift)) {
-        m_camera_pos -= up * SPEED * dt;
+        m_camera_pos -= up * speed * dt;
     }
 
     m_inv_view_matrix = glm::inverse(glm::lookAt(m_camera_pos, m_camera_pos + forward, up));

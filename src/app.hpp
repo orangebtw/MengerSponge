@@ -12,6 +12,12 @@ private:
     void OnFixedUpdate() override;
     void OnRender(const std::shared_ptr<sge::GlfwWindow>& window, double interpolation) override;
 
+    void OnWindowResized(const std::shared_ptr<sge::GlfwWindow>& window, int width, int height) override {
+        m_inv_projection_matrix = glm::inverse(
+            glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f
+        ));
+    }
+
     void OnWindowDestroy(sge::GlfwWindow& window) override {
         if (window.GetID() == m_primary_window->GetID()) {
             Stop();
