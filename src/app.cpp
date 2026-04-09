@@ -8,7 +8,9 @@
 #include <SGE/types/attributes.hpp>
 #include <cstdlib>
 
-App::App() {
+App::App(const AppConfig& config) :
+    m_sensitivity(config.sensitivity)
+{
     InitRenderContext(sge::RenderBackend::OpenGL);
 
     const auto& context = GetRenderContext()->Context();
@@ -32,7 +34,7 @@ App::App() {
     }
     
     m_primary_window = result.value();
-    m_primary_window->SetRawMouseInput(false);
+    m_primary_window->SetRawMouseInput(true);
 
     InitPipeline();
 
@@ -114,15 +116,15 @@ void App::OnUpdate() {
     float prev_yaw = m_yaw;
     float prev_pitch = m_pitch;
     
-    m_yaw += Input::MouseDelta().x * 10.0f * dt;
-    m_pitch -= Input::MouseDelta().y * 10.0f * dt;
+    m_yaw += Input::MouseDelta().x * m_sensitivity * dt;
+    m_pitch -= Input::MouseDelta().y * m_sensitivity * dt;
 
     if (!sge::approx_equals(prev_yaw, m_yaw))
         changed = true;
     if (!sge::approx_equals(prev_pitch, m_pitch))
         changed = true;
 
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+    const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
     if (changed) {
         m_yaw = std::fmod(m_yaw, 360.0f);
@@ -176,7 +178,7 @@ void App::OnRender(const std::shared_ptr<sge::GlfwWindow> &window, double) {
     LLGL::SwapChain& swapChain = GetRenderContext()->GetOrCreateSwapChain(window);
     GetRenderContext()->SetCurrentRenderTarget(&swapChain);
 
-    LLGL::Extent2D windowSize = window->GetSize();
+    const LLGL::Extent2D windowSize = window->GetSize();
     
     m_command_buffer->Begin();
         m_command_buffer->BeginRenderPass(swapChain);

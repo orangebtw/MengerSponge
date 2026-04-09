@@ -2,9 +2,13 @@
 #include <SGE/types/backend.hpp>
 #include <LLGL/CommandBuffer.h>
 
+struct AppConfig {
+    float sensitivity = 1.0f;
+};
+
 class App final : public sge::IEngine {
 public:
-    App();
+    App(const AppConfig& config);
     ~App();
 
 private:
@@ -40,6 +44,8 @@ private:
 
     float m_yaw = 0.0f;
     float m_pitch = 0.0f;
+
+    float m_sensitivity = 1.0f;
 
     uint32_t m_pipeline_id = 0;
     uint32_t m_iterations = 1;

@@ -10,7 +10,7 @@ uniform int uIterations;
 
 #define MAX_STEPS 300
 #define MAX_DIST 1000.0
-#define EPSILON 0.0001
+#define EPSILON 0.00001
 
 #define AO_SAMPLES 10.0
 #define AO_FACTOR 1.0
