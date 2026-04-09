@@ -1,7 +1,8 @@
 #include "app.hpp"
-#include "SGE/input.hpp"
-#include "SGE/time/time.hpp"
-#include "SGE/types/cursor_mode.hpp"
+#include <SGE/input.hpp>
+#include <SGE/math/math.hpp>
+#include <SGE/time/time.hpp>
+#include <SGE/types/cursor_mode.hpp>
 #include <SGE/renderer/types.hpp>
 #include <SGE/renderer/macros.hpp>
 #include <SGE/types/attributes.hpp>
@@ -31,7 +32,7 @@ App::App() {
     }
     
     m_primary_window = result.value();
-    m_primary_window->SetRawMouseInput(true);
+    m_primary_window->SetRawMouseInput(false);
 
     InitPipeline();
 
@@ -86,59 +87,9 @@ void App::InitPipeline() {
     m_pipeline_id = GetRenderContext()->AddPipelineConfig(pipelineConfig);
 }
 
-void App::OnFixedUpdate() {
-    namespace Input = sge::Input;
-    namespace Time = sge::Time;
-
-    if (m_primary_window->GetCursorMode() != sge::CursorMode::Disabled)
-        return;
-
-    const float dt = Time::FixedDeltaSeconds();
-
-    m_yaw += Input::MouseDelta().x * 25.0f * dt;
-    m_pitch -= Input::MouseDelta().y * 25.0f * dt;
-
-    m_yaw = std::fmod(m_yaw, 360.0f);
-    m_pitch = glm::clamp(m_pitch, -89.0f, 89.0f);
-
-    glm::vec3 cameraDir;
-    cameraDir.x = glm::cos(glm::radians(m_yaw)) * glm::cos(glm::radians(m_pitch));
-    cameraDir.y = glm::sin(glm::radians(m_pitch));
-    cameraDir.z = glm::sin(glm::radians(m_yaw)) * glm::cos(glm::radians(m_pitch));
-    glm::vec3 forward = glm::normalize(cameraDir);
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    float speed = 1.0f;
-    if (Input::Pressed(sge::Key::LeftCtrl)) {
-        speed *= 0.01f;
-    }
-
-    if (Input::Pressed(sge::Key::W)) {
-        m_camera_pos += cameraDir * speed * dt;
-    }
-    if (Input::Pressed(sge::Key::S)) {
-        m_camera_pos -= cameraDir * speed * dt;
-    }
-    if (Input::Pressed(sge::Key::D)) {
-        glm::vec3 right = glm::cross(forward, up);
-        m_camera_pos += right * speed * dt;
-    }
-    if (Input::Pressed(sge::Key::A)) {
-        glm::vec3 right = glm::cross(forward, up);
-        m_camera_pos -= right * speed * dt;
-    }
-    if (Input::Pressed(sge::Key::Space)) {
-        m_camera_pos += up * speed * dt;
-    }
-    if (Input::Pressed(sge::Key::LeftShift)) {
-        m_camera_pos -= up * speed * dt;
-    }
-
-    m_inv_view_matrix = glm::inverse(glm::lookAt(m_camera_pos, m_camera_pos + forward, up));
-}
-
 void App::OnUpdate() {
     namespace Input = sge::Input;
+    namespace Time = sge::Time;
 
     if (Input::JustPressed(sge::Key::ArrowUp)) {
         m_iterations++;
@@ -151,6 +102,73 @@ void App::OnUpdate() {
     if (Input::JustPressed(sge::Key::Escape) && m_primary_window->IsFocused()) {
         bool isNormalCursor = m_primary_window->GetCursorMode()  == sge::CursorMode::Normal;
         m_primary_window->SetCursorMode(isNormalCursor ? sge::CursorMode::Disabled : sge::CursorMode::Normal);
+    }
+
+    if (m_primary_window->GetCursorMode() != sge::CursorMode::Disabled)
+        return;
+
+    const float dt = Time::DeltaSeconds();
+
+    bool changed = false;
+
+    float prev_yaw = m_yaw;
+    float prev_pitch = m_pitch;
+    
+    m_yaw += Input::MouseDelta().x * 10.0f * dt;
+    m_pitch -= Input::MouseDelta().y * 10.0f * dt;
+
+    if (!sge::approx_equals(prev_yaw, m_yaw))
+        changed = true;
+    if (!sge::approx_equals(prev_pitch, m_pitch))
+        changed = true;
+
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    if (changed) {
+        m_yaw = std::fmod(m_yaw, 360.0f);
+        m_pitch = glm::clamp(m_pitch, -89.0f, 89.0f);
+
+        glm::vec3 cameraDir;
+        cameraDir.x = glm::cos(glm::radians(m_yaw)) * glm::cos(glm::radians(m_pitch));
+        cameraDir.y = glm::sin(glm::radians(m_pitch));
+        cameraDir.z = glm::sin(glm::radians(m_yaw)) * glm::cos(glm::radians(m_pitch));
+        m_camera_forward = glm::normalize(cameraDir);
+    }
+
+    float speed = 1.0f;
+    if (Input::Pressed(sge::Key::LeftCtrl)) {
+        speed *= 0.01f;
+    }
+
+    if (Input::Pressed(sge::Key::W)) {
+        m_camera_pos += m_camera_forward * speed * dt;
+        changed = true;
+    }
+    if (Input::Pressed(sge::Key::S)) {
+        m_camera_pos -= m_camera_forward * speed * dt;
+        changed = true;
+    }
+    if (Input::Pressed(sge::Key::D)) {
+        glm::vec3 right = glm::cross(m_camera_forward, up);
+        m_camera_pos += right * speed * dt;
+        changed = true;
+    }
+    if (Input::Pressed(sge::Key::A)) {
+        glm::vec3 right = glm::cross(m_camera_forward, up);
+        m_camera_pos -= right * speed * dt;
+        changed = true;
+    }
+    if (Input::Pressed(sge::Key::Space)) {
+        m_camera_pos += up * speed * dt;
+        changed = true;
+    }
+    if (Input::Pressed(sge::Key::LeftShift)) {
+        m_camera_pos -= up * speed * dt;
+        changed = true;
+    }
+
+    if (changed) {
+        m_inv_view_matrix = glm::inverse(glm::lookAt(m_camera_pos, m_camera_pos + m_camera_forward, up));
     }
 }
 

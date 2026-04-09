@@ -10,7 +10,10 @@ uniform int uIterations;
 
 #define MAX_STEPS 300
 #define MAX_DIST 1000.0
-#define EPSILON 0.00001
+#define EPSILON 0.0001
+
+#define AO_SAMPLES 10.0
+#define AO_FACTOR 1.0
 
 float sphere(vec3 p, float r) {
     return length(p) - r;
@@ -33,7 +36,7 @@ float getInnerMenger(vec3 p, float size) {
     float d = EPSILON;
     float scale = 1.0;
     
-    for (int i = 0; i < uIterations; i++) {
+    for (int i = 0; i < uIterations; ++i) {
         float r = size / scale;
         vec3 q = mod(p + r, 2.0 * r) - r;
         d = min(d, getCross(q, r));
@@ -43,17 +46,11 @@ float getInnerMenger(vec3 p, float size) {
 }
 
 vec4 map(vec3 p) {
-    float d = 0.0;
-    vec3 col = vec3(1.0, 1.0, 1.0);
-
-    d = max(box(p, 0.5), -getInnerMenger(p, 0.5));
-
-    return vec4(col, d * 0.9);
+    float d = max(box(p, 0.5), -getInnerMenger(p, 0.5));
+    return vec4(vec3(1.0, 1.0, 1.0), d * 0.9);
 }
 
 float getAO(vec3 pos, vec3 norm) {
-    float AO_SAMPLES = 10.0;
-    float AO_FACTOR = 1.0;
     float result = 1.0;
     float s = -AO_SAMPLES;
     float unit = 1.0 / AO_SAMPLES;
@@ -90,7 +87,6 @@ vec4 rayMarch(vec3 ro, vec3 rd, int steps) {
 
 void main() {
     vec3 light = vec3(0.0, 1000.0, 0.0);
-    bool positionLight = true;
 
     vec3 col = vec3(0.0);
     vec2 uv = v_uv * 2.0 - 1.0;
@@ -104,9 +100,6 @@ void main() {
     if (res.w < MAX_DIST) {
         vec3 p = origin + dir * res.w;
         vec3 normal = getNormal(p);
-        vec3 lightDir = (positionLight) ? normalize(light - origin): -light;
-        float lighting = clamp(clamp(dot(normal,lightDir), 0.0, 1.0), 0.0, 1.0);
-
         float diff = 0.7 * max(0.0, dot(normal, -dir));
         float ao = getAO(p, normal);
         col += diff * ao * res.rgb;

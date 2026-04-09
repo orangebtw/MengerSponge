@@ -9,7 +9,6 @@ public:
 
 private:
     void OnUpdate() override;
-    void OnFixedUpdate() override;
     void OnRender(const std::shared_ptr<sge::GlfwWindow>& window, double interpolation) override;
 
     void OnWindowResized(const std::shared_ptr<sge::GlfwWindow>& window, int width, int height) override {
@@ -32,6 +31,7 @@ private:
     glm::mat4 m_inv_projection_matrix = glm::mat4(1.0);
 
     glm::vec3 m_camera_pos = glm::vec3(0.0, 0.0, 0.0);
+    glm::vec3 m_camera_forward = glm::vec3(1.0, 0.0, 0.0);
 
     std::shared_ptr<sge::GlfwWindow> m_primary_window;
     LLGL::CommandBuffer* m_command_buffer = nullptr;
