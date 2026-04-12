@@ -13,11 +13,15 @@ int main(int argc, char** argv) {
             }
             config.sensitivity = std::stof(argv[i+1]);
             ++i;
+        } else if (strcmp("--pause", argv[i]) == 0) {
+            std::getchar();
         }
     }
 
     App app(config);
-    app.Run();
+    if (app.Init()) {
+        app.Run();
+    }
 
     return 0;
 }

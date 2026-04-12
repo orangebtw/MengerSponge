@@ -1,5 +1,6 @@
 #include <SGE/engine.hpp>
 #include <SGE/types/backend.hpp>
+#include <LLGL/Utils/VertexFormat.h>
 #include <LLGL/CommandBuffer.h>
 
 struct AppConfig {
@@ -8,17 +9,18 @@ struct AppConfig {
 
 class App final : public sge::IEngine {
 public:
-    App(const AppConfig& config);
-    ~App();
+    App(const AppConfig& config) : m_config(config) {}
+
+    bool Init() override;
 
 private:
     void OnUpdate() override;
-    void OnRender(const std::shared_ptr<sge::GlfwWindow>& window, double interpolation) override;
+    void OnPostUpdate() override;
+    void OnRender(const std::shared_ptr<sge::GlfwWindow>& window) override;
 
     void OnWindowResized(const std::shared_ptr<sge::GlfwWindow>& window, int width, int height) override {
-        m_inv_projection_matrix = glm::inverse(
-            glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f
-        ));
+        m_projection_matrix = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
+        m_inv_projection_matrix = glm::inverse(m_projection_matrix);
     }
 
     void OnWindowDestroy(sge::GlfwWindow& window) override {
@@ -28,25 +30,38 @@ private:
     }
 
 private:
-    void InitPipeline();
+    struct Mesh {
+        LLGL::Buffer* vertex_buffer = nullptr;
+        size_t vertex_count = 0;
+    };
+
+    bool InitSDFPipeline();
+    bool InitVertexPipeline();
     
 private:
-    glm::mat4 m_inv_view_matrix = glm::mat4(1.0);
-    glm::mat4 m_inv_projection_matrix = glm::mat4(1.0);
+    glm::mat4 m_view_matrix = glm::mat4(1.0f);
+    glm::mat4 m_projection_matrix = glm::mat4(1.0f);
+    glm::mat4 m_inv_view_matrix = glm::mat4(1.0f);
+    glm::mat4 m_inv_projection_matrix = glm::mat4(1.0f);
 
-    glm::vec3 m_camera_pos = glm::vec3(0.0, 0.0, 0.0);
+    glm::vec3 m_camera_pos = glm::vec3(0.0f);
     glm::vec3 m_camera_forward = glm::vec3(1.0, 0.0, 0.0);
 
     std::shared_ptr<sge::GlfwWindow> m_primary_window;
     LLGL::CommandBuffer* m_command_buffer = nullptr;
     LLGL::CommandQueue* m_command_queue = nullptr;
-    LLGL::Buffer* m_vertex_buffer = nullptr;
+    LLGL::Buffer* m_sdf_vertex_buffer = nullptr;
+
+    std::vector<Mesh> m_menger_sponge_meshes;
+
+    LLGL::VertexFormat m_vertex_format;
+
+    AppConfig m_config;
 
     float m_yaw = 0.0f;
     float m_pitch = 0.0f;
 
-    float m_sensitivity = 1.0f;
-
-    uint32_t m_pipeline_id = 0;
-    uint32_t m_iterations = 1;
+    uint32_t m_sdf_pipeline_id = -1;
+    uint32_t m_vertex_pipeline_id = -1;
+    uint32_t m_iterations = 0;
 };
