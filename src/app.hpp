@@ -7,6 +7,11 @@ struct AppConfig {
     float sensitivity = 1.0f;
 };
 
+enum class Method : uint8_t {
+    SDF = 0,
+    Polygons = 1
+};
+
 class App final : public sge::IEngine {
 public:
     App(const AppConfig& config) : m_config(config) {}
@@ -32,7 +37,8 @@ private:
 private:
     struct Mesh {
         LLGL::Buffer* vertex_buffer = nullptr;
-        size_t vertex_count = 0;
+        LLGL::Buffer* index_buffer = nullptr;
+        size_t index_count = 0;
     };
 
     bool InitSDFPipeline();
@@ -64,4 +70,6 @@ private:
     uint32_t m_sdf_pipeline_id = -1;
     uint32_t m_vertex_pipeline_id = -1;
     uint32_t m_iterations = 0;
+
+    Method m_method = Method::SDF;
 };

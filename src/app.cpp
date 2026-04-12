@@ -72,8 +72,10 @@ bool App::Init() {
     return true;
 }
 
-static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3 size, Faces faces = Faces(), const AO& ao = AO()) {
+static void GenerateCube(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, glm::vec3 pos, glm::vec3 size, Faces faces = Faces(), const AO& ao = AO()) {
     if (faces.front) {
+        uint32_t idx = vertices.size();
+
         // Front Face
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(0, 0, 0) * size,
@@ -96,14 +98,6 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = 0,
             .normal_z = -1
         });
-
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 1, 0) * size,
-            .ao_id = ao.front[2],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = -1
-        });
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(0, 1, 0) * size,
             .ao_id = ao.front[1],
@@ -111,16 +105,18 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = 0,
             .normal_z = -1
         });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 0, 0) * size,
-            .ao_id = ao.front[0],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = -1
-        });
+
+        indices.push_back(idx + 0);
+        indices.push_back(idx + 1);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 3);
+        indices.push_back(idx + 0);
     }
 
     if (faces.right) {
+        uint32_t idx = vertices.size();
+
         // Right Face
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(1, 0, 0) * size,
@@ -143,14 +139,6 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = 0,
             .normal_z = 0
         });
-
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 1, 1) * size,
-            .ao_id = ao.right[2],
-            .normal_x = 1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(1, 1, 0) * size,
             .ao_id = ao.right[1],
@@ -158,16 +146,18 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = 0,
             .normal_z = 0
         });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 0, 0) * size,
-            .ao_id = ao.right[0],
-            .normal_x = 1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
+
+        indices.push_back(idx + 0);
+        indices.push_back(idx + 1);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 3);
+        indices.push_back(idx + 0);
     }
 
     if (faces.back) {
+        uint32_t idx = vertices.size();
+
         // Back face
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(1, 0, 1) * size,
@@ -190,15 +180,6 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = 0,
             .normal_z = 1
         });
-        
-
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 1, 1) * size,
-            .ao_id = ao.back[1],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = 1
-        });
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(1, 1, 1) * size,
             .ao_id = ao.back[2],
@@ -206,17 +187,18 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = 0,
             .normal_z = 1
         });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 0, 1) * size,
-            .ao_id = ao.back[3],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = 1
-        });
-        
+
+        indices.push_back(idx + 0);
+        indices.push_back(idx + 1);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 3);
+        indices.push_back(idx + 0);
     }
 
     if (faces.left) {
+        uint32_t idx = vertices.size();
+
         // Left Face
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(0, 0, 1) * size,
@@ -239,14 +221,6 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = 0,
             .normal_z = 0
         });
-
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 1, 0) * size,
-            .ao_id = ao.left[1],
-            .normal_x = -1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(0, 1, 1) * size,
             .ao_id = ao.left[2],
@@ -254,17 +228,18 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = 0,
             .normal_z = 0
         });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 0, 1) * size,
-            .ao_id = ao.left[3],
-            .normal_x = -1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
 
+        indices.push_back(idx + 0);
+        indices.push_back(idx + 1);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 3);
+        indices.push_back(idx + 0);
     }
 
     if (faces.top) {
+        uint32_t idx = vertices.size();
+
         // Top Face
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(0, 1, 0) * size,
@@ -287,14 +262,6 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = 1,
             .normal_z = 0
         });
-
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 1, 1) * size,
-            .ao_id = ao.top[2],
-            .normal_x = 0,
-            .normal_y = 1,
-            .normal_z = 0
-        });
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(0, 1, 1) * size,
             .ao_id = ao.top[3],
@@ -302,16 +269,18 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = 1,
             .normal_z = 0
         });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 1, 0) * size,
-            .ao_id = ao.top[0],
-            .normal_x = 0,
-            .normal_y = 1,
-            .normal_z = 0
-        });
+
+        indices.push_back(idx + 0);
+        indices.push_back(idx + 1);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 3);
+        indices.push_back(idx + 0);
     }
     
     if (faces.bottom) {
+        uint32_t idx = vertices.size();
+
         // Bottom Face
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(0, 0, 1) * size,
@@ -334,14 +303,6 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = -1,
             .normal_z = 0
         });
-
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 0, 0) * size,
-            .ao_id = ao.bottom[1],
-            .normal_x = 0,
-            .normal_y = -1,
-            .normal_z = 0
-        });
         vertices.push_back(Vertex{
             .position = pos + glm::vec3(0, 0, 0) * size,
             .ao_id = ao.bottom[0],
@@ -349,13 +310,13 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
             .normal_y = -1,
             .normal_z = 0
         });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 0, 1) * size,
-            .ao_id = ao.bottom[3],
-            .normal_x = 0,
-            .normal_y = -1,
-            .normal_z = 0
-        });
+
+        indices.push_back(idx + 0);
+        indices.push_back(idx + 1);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 2);
+        indices.push_back(idx + 3);
+        indices.push_back(idx + 0);
     }
 }
 
@@ -452,9 +413,9 @@ static void CalculateAO(uint8_t (&ao)[4], int x, int y, int z, uint8_t axis, int
     ao[3] = c + d + e;
 }
 
-static void GenerateMengerSponge(std::vector<Vertex>& vertices, uint32_t iterations, glm::vec3 position, glm::vec3 size) {
+static void GenerateMengerSponge(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, uint32_t iterations, glm::vec3 position, glm::vec3 size) {
     if (iterations == 0) {
-        GenerateCube(vertices, position, size);
+        GenerateCube(vertices, indices, position, size);
         return;
     }
 
@@ -503,7 +464,7 @@ static void GenerateMengerSponge(std::vector<Vertex>& vertices, uint32_t iterati
                         CalculateAO(ao.bottom, x, y - 1, z, 1, mx, my, mz);
                     }
                     
-                    GenerateCube(vertices, p, s, faces, ao);
+                    GenerateCube(vertices, indices, p, s, faces, ao);
                 }
             }
         }
@@ -561,13 +522,22 @@ bool App::InitVertexPipeline() {
     });
 
     std::vector<Vertex> vertices;
-    GenerateCube(vertices, glm::vec3(0.0f), glm::vec3(2.0f));
+    std::vector<uint32_t> indices;
+    GenerateMengerSponge(vertices, indices, m_iterations, glm::vec3(0.0f), glm::vec3(2.0f));
 
-    LLGL::Buffer* buffer = GetRenderContext()->CreateVertexBuffer(vertices, m_vertex_format);
-    if (buffer == nullptr)
+    LLGL::Buffer* vertex_buffer = GetRenderContext()->CreateVertexBuffer(vertices, m_vertex_format);
+    if (vertex_buffer == nullptr)
         return false;
 
-    m_menger_sponge_meshes.push_back(Mesh{ .vertex_buffer = buffer, .vertex_count = vertices.size() });
+    LLGL::Buffer* index_buffer = GetRenderContext()->CreateIndexBuffer(indices, LLGL::Format::R32UInt);
+    if (index_buffer == nullptr)
+        return false;
+
+    m_menger_sponge_meshes.push_back(Mesh{
+        .vertex_buffer = vertex_buffer,
+        .index_buffer = index_buffer,
+        .index_count = indices.size()
+    });
 
     LLGL::PipelineLayoutDescriptor pipelineLayoutDesc;
     pipelineLayoutDesc.uniforms = {
@@ -587,6 +557,7 @@ bool App::InitVertexPipeline() {
     pipelineConfig.layout = GetRenderContext()->GetLLGLContext()->CreatePipelineLayout(pipelineLayoutDesc);
     pipelineConfig.vertexShader = vertexShader;
     pipelineConfig.pixelShader = pixelShader;
+    pipelineConfig.indexFormat = LLGL::Format::R32UInt;
     pipelineConfig.cullMode = LLGL::CullMode::Back;
     pipelineConfig.frontCCW = true;
     pipelineConfig.depth.testEnabled = true;
@@ -607,6 +578,11 @@ void App::OnUpdate() {
 
     if (Input::JustPressed(sge::Key::ArrowDown) && m_iterations > 0) {
         m_iterations--;
+    }
+
+    if (Input::JustPressed(sge::Key::Tab)) {
+        m_method = m_method == Method::SDF ? Method::Polygons : Method::SDF;
+        m_iterations = 0;
     }
 
     if (Input::JustPressed(sge::Key::Escape) && m_primary_window->IsFocused()) {
@@ -686,15 +662,19 @@ void App::OnUpdate() {
 }
 
 void App::OnPostUpdate() {
-    if (m_iterations >= m_menger_sponge_meshes.size()) {
-        std::vector<Vertex> vertices;
-        GenerateMengerSponge(vertices, m_iterations, glm::vec3(0.0f), glm::vec3(2.0f));
-        SGE_LOG_INFO("Iteration: {}, Vertex count: {}, Bytes: {}", m_iterations, vertices.size(), vertices.size() * sizeof(Vertex));
+    if (m_method == Method::Polygons) {
+        if (m_iterations >= m_menger_sponge_meshes.size()) {
+            std::vector<Vertex> vertices;
+            std::vector<uint32_t> indices;
+            GenerateMengerSponge(vertices, indices, m_iterations, glm::vec3(0.0f), glm::vec3(2.0f));
+            SGE_LOG_INFO("Iteration: {}, Vertex count: {}, Bytes: {}", m_iterations, vertices.size(), vertices.size() * sizeof(Vertex));
 
-        m_menger_sponge_meshes.push_back(Mesh {
-            .vertex_buffer = GetRenderContext()->CreateVertexBuffer(vertices, m_vertex_format),
-            .vertex_count = vertices.size()
-        });
+            m_menger_sponge_meshes.push_back(Mesh {
+                .vertex_buffer = GetRenderContext()->CreateVertexBuffer(vertices, m_vertex_format),
+                .index_buffer = GetRenderContext()->CreateIndexBuffer(indices, LLGL::Format::R32UInt),
+                .index_count = indices.size()
+            });
+        }
     }
 }
 
@@ -704,40 +684,41 @@ void App::OnRender(const std::shared_ptr<sge::GlfwWindow> &window) {
 
     const LLGL::Extent2D windowSize = window->GetSize();
 
-#if 0
-    uint32_t iterations = m_iterations + 1;
+    if (m_method == Method::SDF) {
+        uint32_t iterations = m_iterations + 1;
 
-    m_command_buffer->Begin();
-        m_command_buffer->BeginRenderPass(swapChain);
-            m_command_buffer->Clear(LLGL::ClearFlags::Color, LLGL::ClearValue(0.0f, 0.0f, 0.0f, 1.0f));
-            m_command_buffer->SetViewport(windowSize);
+        m_command_buffer->Begin();
+            m_command_buffer->BeginRenderPass(swapChain);
+                m_command_buffer->Clear(LLGL::ClearFlags::Color, LLGL::ClearValue(0.0f, 0.0f, 0.0f, 1.0f));
+                m_command_buffer->SetViewport(windowSize);
 
-            m_command_buffer->SetPipelineState(GetRenderContext()->GetOrCreatePipeline(m_sdf_pipeline_id));
-            m_command_buffer->SetVertexBuffer(*m_sdf_vertex_buffer);
+                m_command_buffer->SetPipelineState(GetRenderContext()->GetOrCreatePipeline(m_sdf_pipeline_id));
+                m_command_buffer->SetVertexBuffer(*m_sdf_vertex_buffer);
 
-            m_command_buffer->SetUniforms(0, &m_inv_view_matrix, sizeof(m_inv_view_matrix));
-            m_command_buffer->SetUniforms(1, &m_inv_projection_matrix, sizeof(m_inv_projection_matrix));
-            m_command_buffer->SetUniforms(2, &iterations, sizeof(iterations));
-            m_command_buffer->Draw(3, 0);
-        m_command_buffer->EndRenderPass();
-    m_command_buffer->End();
-#else
-    const Mesh& mesh = m_menger_sponge_meshes[m_iterations];
+                m_command_buffer->SetUniforms(0, &m_inv_view_matrix, sizeof(m_inv_view_matrix));
+                m_command_buffer->SetUniforms(1, &m_inv_projection_matrix, sizeof(m_inv_projection_matrix));
+                m_command_buffer->SetUniforms(2, &iterations, sizeof(iterations));
+                m_command_buffer->Draw(3, 0);
+            m_command_buffer->EndRenderPass();
+        m_command_buffer->End();
+    } else {
+        const Mesh& mesh = m_menger_sponge_meshes[m_iterations];
 
-    m_command_buffer->Begin();
-        m_command_buffer->BeginRenderPass(swapChain);
-            m_command_buffer->Clear(LLGL::ClearFlags::ColorDepth, LLGL::ClearValue(0.4f, 0.4f, 0.4f, 1.0f, 1.0f));
-            m_command_buffer->SetViewport(windowSize);
+        m_command_buffer->Begin();
+            m_command_buffer->BeginRenderPass(swapChain);
+                m_command_buffer->Clear(LLGL::ClearFlags::ColorDepth, LLGL::ClearValue(0.4f, 0.4f, 0.4f, 1.0f, 1.0f));
+                m_command_buffer->SetViewport(windowSize);
 
-            m_command_buffer->SetPipelineState(GetRenderContext()->GetOrCreatePipeline(m_vertex_pipeline_id));
-            m_command_buffer->SetVertexBuffer(*mesh.vertex_buffer);
+                m_command_buffer->SetPipelineState(GetRenderContext()->GetOrCreatePipeline(m_vertex_pipeline_id));
+                m_command_buffer->SetVertexBuffer(*mesh.vertex_buffer);
+                m_command_buffer->SetIndexBuffer(*mesh.index_buffer);
 
-            m_command_buffer->SetUniforms(0, &m_view_matrix, sizeof(m_view_matrix));
-            m_command_buffer->SetUniforms(1, &m_projection_matrix, sizeof(m_projection_matrix));
-            m_command_buffer->Draw(mesh.vertex_count, 0);
-        m_command_buffer->EndRenderPass();
-    m_command_buffer->End();
-#endif
+                m_command_buffer->SetUniforms(0, &m_view_matrix, sizeof(m_view_matrix));
+                m_command_buffer->SetUniforms(1, &m_projection_matrix, sizeof(m_projection_matrix));
+                m_command_buffer->DrawIndexed(mesh.index_count, 0);
+            m_command_buffer->EndRenderPass();
+        m_command_buffer->End();
+    }
 
     m_command_queue->Submit(*m_command_buffer);
     GetRenderContext()->Present(window);
