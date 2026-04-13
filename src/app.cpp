@@ -8,12 +8,26 @@
 #include <SGE/types/attributes.hpp>
 
 struct Vertex {
-    glm::vec3 position;
-    uint8_t ao_id;
-    int8_t normal_x;
-    int8_t normal_y;
-    int8_t normal_z;
+    int16_t pos_x;
+    int16_t pos_y;
+    int16_t pos_z;
+    uint8_t data;
 };
+
+static Vertex CreateVertex(glm::i16vec3 position, int8_t normal_x, int8_t normal_y, int8_t normal_z, uint8_t ao_id) {
+    uint8_t data = 0;
+    data |= (normal_x + 1) << 6;
+    data |= (normal_y + 1) << 4;
+    data |= (normal_z + 1) << 2;
+    data |= ao_id;
+
+    return Vertex {
+        .pos_x = position.x,
+        .pos_y = position.y,
+        .pos_z = position.z,
+        .data = data
+    };
+}
 
 struct Faces {
     bool front = true;
@@ -72,251 +86,65 @@ bool App::Init() {
     return true;
 }
 
-static void GenerateCube(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, glm::vec3 pos, glm::vec3 size, Faces faces = Faces(), const AO& ao = AO()) {
+static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3 size, Faces faces = Faces(), const AO& ao = AO()) {
     if (faces.front) {
-        uint32_t idx = vertices.size();
-
         // Front Face
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 0, 0) * size,
-            .ao_id = ao.front[0],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = -1
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 0, 0) * size,
-            .ao_id = ao.front[3],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = -1
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 1, 0) * size,
-            .ao_id = ao.front[2],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = -1
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 1, 0) * size,
-            .ao_id = ao.front[1],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = -1
-        });
-
-        indices.push_back(idx + 0);
-        indices.push_back(idx + 1);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 3);
-        indices.push_back(idx + 0);
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 0, 0) * size, 0, 0, -1, ao.front[0]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 0, 0) * size, 0, 0, -1, ao.front[3]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 1, 0) * size, 0, 0, -1, ao.front[2]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 1, 0) * size, 0, 0, -1, ao.front[2]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 1, 0) * size, 0, 0, -1, ao.front[1]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 0, 0) * size, 0, 0, -1, ao.front[0]));
     }
 
     if (faces.right) {
-        uint32_t idx = vertices.size();
-
         // Right Face
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 0, 0) * size,
-            .ao_id = ao.right[0],
-            .normal_x = 1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 0, 1) * size,
-            .ao_id = ao.right[3],
-            .normal_x = 1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 1, 1) * size,
-            .ao_id = ao.right[2],
-            .normal_x = 1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 1, 0) * size,
-            .ao_id = ao.right[1],
-            .normal_x = 1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
-
-        indices.push_back(idx + 0);
-        indices.push_back(idx + 1);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 3);
-        indices.push_back(idx + 0);
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 0, 0) * size, 1, 0, 0, ao.right[0]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 0, 1) * size, 1, 0, 0, ao.right[3]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 1, 1) * size, 1, 0, 0, ao.right[2]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 1, 1) * size, 1, 0, 0, ao.right[2]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 1, 0) * size, 1, 0, 0, ao.right[1]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 0, 0) * size, 1, 0, 0, ao.right[0]));
     }
 
     if (faces.back) {
-        uint32_t idx = vertices.size();
-
         // Back face
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 0, 1) * size,
-            .ao_id = ao.back[3],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = 1
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 0, 1) * size,
-            .ao_id = ao.back[0],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = 1
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 1, 1) * size,
-            .ao_id = ao.back[1],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = 1
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 1, 1) * size,
-            .ao_id = ao.back[2],
-            .normal_x = 0,
-            .normal_y = 0,
-            .normal_z = 1
-        });
-
-        indices.push_back(idx + 0);
-        indices.push_back(idx + 1);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 3);
-        indices.push_back(idx + 0);
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 0, 1) * size, 0, 0, 1, ao.back[3]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 0, 1) * size, 0, 0, 1, ao.back[0]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 1, 1) * size, 0, 0, 1, ao.back[1]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 1, 1) * size, 0, 0, 1, ao.back[1]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 1, 1) * size, 0, 0, 1, ao.back[2]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 0, 1) * size, 0, 0, 1, ao.back[3]));
     }
 
     if (faces.left) {
-        uint32_t idx = vertices.size();
-
         // Left Face
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 0, 1) * size,
-            .ao_id = ao.left[3],
-            .normal_x = -1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 0, 0) * size,
-            .ao_id = ao.left[0],
-            .normal_x = -1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 1, 0) * size,
-            .ao_id = ao.left[1],
-            .normal_x = -1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 1, 1) * size,
-            .ao_id = ao.left[2],
-            .normal_x = -1,
-            .normal_y = 0,
-            .normal_z = 0
-        });
-
-        indices.push_back(idx + 0);
-        indices.push_back(idx + 1);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 3);
-        indices.push_back(idx + 0);
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 0, 1) * size, -1, 0, 0, ao.left[3]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 0, 0) * size, -1, 0, 0, ao.left[0]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 1, 0) * size, -1, 0, 0, ao.left[1]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 1, 0) * size, -1, 0, 0, ao.left[1]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 1, 1) * size, -1, 0, 0, ao.left[2]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 0, 1) * size, -1, 0, 0, ao.left[3]));
     }
 
     if (faces.top) {
-        uint32_t idx = vertices.size();
-
         // Top Face
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 1, 0) * size,
-            .ao_id = ao.top[0],
-            .normal_x = 0,
-            .normal_y = 1,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 1, 0) * size,
-            .ao_id = ao.top[1],
-            .normal_x = 0,
-            .normal_y = 1,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 1, 1) * size,
-            .ao_id = ao.top[2],
-            .normal_x = 0,
-            .normal_y = 1,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 1, 1) * size,
-            .ao_id = ao.top[3],
-            .normal_x = 0,
-            .normal_y = 1,
-            .normal_z = 0
-        });
-
-        indices.push_back(idx + 0);
-        indices.push_back(idx + 1);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 3);
-        indices.push_back(idx + 0);
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 1, 0) * size, 0, 1, 0, ao.top[0]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 1, 0) * size, 0, 1, 0, ao.top[1]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 1, 1) * size, 0, 1, 0, ao.top[2]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 1, 1) * size, 0, 1, 0, ao.top[2]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 1, 1) * size, 0, 1, 0, ao.top[3]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 1, 0) * size, 0, 1, 0, ao.top[0]));
     }
     
     if (faces.bottom) {
-        uint32_t idx = vertices.size();
-
         // Bottom Face
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 0, 1) * size,
-            .ao_id = ao.bottom[3],
-            .normal_x = 0,
-            .normal_y = -1,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 0, 1) * size,
-            .ao_id = ao.bottom[2],
-            .normal_x = 0,
-            .normal_y = -1,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(1, 0, 0) * size,
-            .ao_id = ao.bottom[1],
-            .normal_x = 0,
-            .normal_y = -1,
-            .normal_z = 0
-        });
-        vertices.push_back(Vertex{
-            .position = pos + glm::vec3(0, 0, 0) * size,
-            .ao_id = ao.bottom[0],
-            .normal_x = 0,
-            .normal_y = -1,
-            .normal_z = 0
-        });
-
-        indices.push_back(idx + 0);
-        indices.push_back(idx + 1);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 2);
-        indices.push_back(idx + 3);
-        indices.push_back(idx + 0);
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 0, 1) * size, 0, -1, 0, ao.bottom[3]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 0, 1) * size, 0, -1, 0, ao.bottom[2]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 0, 0) * size, 0, -1, 0, ao.bottom[1]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(1, 0, 0) * size, 0, -1, 0, ao.bottom[1]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 0, 0) * size, 0, -1, 0, ao.bottom[0]));
+        vertices.push_back(CreateVertex(pos + glm::vec3(0, 0, 1) * size, 0, -1, 0, ao.bottom[3]));
     }
 }
 
@@ -413,16 +241,16 @@ static void CalculateAO(uint8_t (&ao)[4], int x, int y, int z, uint8_t axis, int
     ao[3] = c + d + e;
 }
 
-static void GenerateMengerSponge(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, uint32_t iterations, glm::vec3 position, glm::vec3 size) {
+static void GenerateMengerSponge(std::vector<Vertex>& vertices, uint32_t iterations, glm::vec3 position, glm::vec3 size) {
     if (iterations == 0) {
-        GenerateCube(vertices, indices, position, size);
+        GenerateCube(vertices, position, size);
         return;
     }
 
     int iters = static_cast<int>(iterations);
 
     glm::vec3 pos = position;
-    glm::vec3 s = size / std::powf(3.0f, iterations);
+    glm::vec3 s = size;
 
     int mx = powi(3, iters);
     int my = powi(3, iters);
@@ -464,7 +292,7 @@ static void GenerateMengerSponge(std::vector<Vertex>& vertices, std::vector<uint
                         CalculateAO(ao.bottom, x, y - 1, z, 1, mx, my, mz);
                     }
                     
-                    GenerateCube(vertices, indices, p, s, faces, ao);
+                    GenerateCube(vertices, p, s, faces, ao);
                 }
             }
         }
@@ -514,35 +342,29 @@ bool App::InitSDFPipeline() {
 
 bool App::InitVertexPipeline() {
     m_vertex_format = sge::Attributes(GetRenderContext()->Backend(), {
-        sge::Attribute::Vertex(LLGL::Format::RGB32Float, "a_position", "Position"),
-        sge::Attribute::Vertex(LLGL::Format::R8UInt, "a_ao_id", "AoID"),
-        sge::Attribute::Vertex(LLGL::Format::R8SInt, "a_normal_x", "NormalX"),
-        sge::Attribute::Vertex(LLGL::Format::R8SInt, "a_normal_y", "NormalY"),
-        sge::Attribute::Vertex(LLGL::Format::R8SInt, "a_normal_z", "NormalZ"),
+        sge::Attribute::Vertex(LLGL::Format::R16SInt, "a_position_x", "PositionX"),
+        sge::Attribute::Vertex(LLGL::Format::R16SInt, "a_position_y", "PositionY"),
+        sge::Attribute::Vertex(LLGL::Format::R16SInt, "a_position_z", "PositionZ"),
+        sge::Attribute::Vertex(LLGL::Format::R8UInt, "a_data", "Data"),
     });
 
     std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
-    GenerateMengerSponge(vertices, indices, m_iterations, glm::vec3(0.0f), glm::vec3(2.0f));
+    GenerateMengerSponge(vertices, m_iterations, glm::vec3(0.0f), glm::vec3(2.0f));
 
     LLGL::Buffer* vertex_buffer = GetRenderContext()->CreateVertexBuffer(vertices, m_vertex_format);
     if (vertex_buffer == nullptr)
         return false;
 
-    LLGL::Buffer* index_buffer = GetRenderContext()->CreateIndexBuffer(indices, LLGL::Format::R32UInt);
-    if (index_buffer == nullptr)
-        return false;
-
     m_menger_sponge_meshes.push_back(Mesh{
         .vertex_buffer = vertex_buffer,
-        .index_buffer = index_buffer,
-        .index_count = indices.size()
+        .vertex_count = vertices.size()
     });
 
     LLGL::PipelineLayoutDescriptor pipelineLayoutDesc;
     pipelineLayoutDesc.uniforms = {
         LLGL::UniformDescriptor("uViewMatrix", LLGL::UniformType::Float4x4),
         LLGL::UniformDescriptor("uProjectionMatrix", LLGL::UniformType::Float4x4),
+        LLGL::UniformDescriptor("uIterations", LLGL::UniformType::Int1),
     };
 
     LLGL::Shader* vertexShader = GetRenderContext()->LoadShaderFromFile(sge::ShaderPath(sge::ShaderType::Vertex, "basic"), {}, m_vertex_format.attributes);
@@ -557,7 +379,6 @@ bool App::InitVertexPipeline() {
     pipelineConfig.layout = GetRenderContext()->GetLLGLContext()->CreatePipelineLayout(pipelineLayoutDesc);
     pipelineConfig.vertexShader = vertexShader;
     pipelineConfig.pixelShader = pixelShader;
-    pipelineConfig.indexFormat = LLGL::Format::R32UInt;
     pipelineConfig.cullMode = LLGL::CullMode::Back;
     pipelineConfig.frontCCW = true;
     pipelineConfig.depth.testEnabled = true;
@@ -665,14 +486,12 @@ void App::OnPostUpdate() {
     if (m_method == Method::Polygons) {
         if (m_iterations >= m_menger_sponge_meshes.size()) {
             std::vector<Vertex> vertices;
-            std::vector<uint32_t> indices;
-            GenerateMengerSponge(vertices, indices, m_iterations, glm::vec3(0.0f), glm::vec3(2.0f));
+            GenerateMengerSponge(vertices, m_iterations, glm::vec3(0.0f), glm::vec3(2.0f));
             SGE_LOG_INFO("Iteration: {}, Vertex count: {}, Bytes: {}", m_iterations, vertices.size(), vertices.size() * sizeof(Vertex));
 
             m_menger_sponge_meshes.push_back(Mesh {
                 .vertex_buffer = GetRenderContext()->CreateVertexBuffer(vertices, m_vertex_format),
-                .index_buffer = GetRenderContext()->CreateIndexBuffer(indices, LLGL::Format::R32UInt),
-                .index_count = indices.size()
+                .vertex_count = vertices.size()
             });
         }
     }
@@ -711,11 +530,11 @@ void App::OnRender(const std::shared_ptr<sge::GlfwWindow> &window) {
 
                 m_command_buffer->SetPipelineState(GetRenderContext()->GetOrCreatePipeline(m_vertex_pipeline_id));
                 m_command_buffer->SetVertexBuffer(*mesh.vertex_buffer);
-                m_command_buffer->SetIndexBuffer(*mesh.index_buffer);
 
                 m_command_buffer->SetUniforms(0, &m_view_matrix, sizeof(m_view_matrix));
                 m_command_buffer->SetUniforms(1, &m_projection_matrix, sizeof(m_projection_matrix));
-                m_command_buffer->DrawIndexed(mesh.index_count, 0);
+                m_command_buffer->SetUniforms(2, &m_iterations, sizeof(m_iterations));
+                m_command_buffer->Draw(mesh.vertex_count, 0);
             m_command_buffer->EndRenderPass();
         m_command_buffer->End();
     }

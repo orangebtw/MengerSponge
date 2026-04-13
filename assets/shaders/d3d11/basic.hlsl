@@ -1,9 +1,8 @@
 struct VSInput {
-    float3 position : Position;
-    uint ao_id : AoID;
-    int normal_x : NormalX;
-    int normal_y : NormalY;
-    int normal_z : NormalZ;
+    int position_x : PositionX;
+    int position_y : PositionY;
+    int position_z : PositionZ;
+    uint data : Data;
 };
 
 struct VSOutput {
@@ -15,15 +14,24 @@ struct VSOutput {
 
 uniform float4x4 uViewMatrix;
 uniform float4x4 uProjectionMatrix;
+uniform int uIterations;
 
 static const float AO_VALUES[4] = { 0.1, 0.25, 0.5, 1.0 };
 
 VSOutput VS(VSInput inp) {
+    float3 p = float3(inp.position_x, inp.position_y, inp.position_z);
+    float3 pos = p / pow(3, uIterations);
+
+    int normal_x = ((inp.data >> 6) & 0x3) - 1;
+    int normal_y = ((inp.data >> 4) & 0x3) - 1;
+    int normal_z = ((inp.data >> 2) & 0x3) - 1;
+    int ao_id = inp.data & 0x3;
+
     VSOutput outp;
-    outp.normal = float3(inp.normal_x, inp.normal_y, inp.normal_z);
-    outp.position = mul(mul(uProjectionMatrix, uViewMatrix), float4(inp.position, 1.0));
-    outp.pos = inp.position;
-    outp.ao = AO_VALUES[inp.ao_id];
+    outp.normal = float3(normal_x, normal_y, normal_z);
+    outp.position = mul(mul(uProjectionMatrix, uViewMatrix), float4(pos, 1.0));
+    outp.pos = pos;
+    outp.ao = AO_VALUES[ao_id];
     return outp;
 }
 

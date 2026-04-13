@@ -24,7 +24,7 @@ private:
     void OnRender(const std::shared_ptr<sge::GlfwWindow>& window) override;
 
     void OnWindowResized(const std::shared_ptr<sge::GlfwWindow>& window, int width, int height) override {
-        m_projection_matrix = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
+        m_projection_matrix = glm::perspectiveLH_ZO(glm::radians(45.0f), 1280.0f / 720.0f, 0.001f, 100.0f);
         m_inv_projection_matrix = glm::inverse(m_projection_matrix);
     }
 
@@ -37,8 +37,7 @@ private:
 private:
     struct Mesh {
         LLGL::Buffer* vertex_buffer = nullptr;
-        LLGL::Buffer* index_buffer = nullptr;
-        size_t index_count = 0;
+        size_t vertex_count = 0;
     };
 
     bool InitSDFPipeline();
