@@ -7,27 +7,14 @@
 #include <SGE/renderer/macros.hpp>
 #include <SGE/types/attributes.hpp>
 
+static constexpr uint32_t MAX_ITERATIONS = 5;
+
 struct Vertex {
     int16_t pos_x;
     int16_t pos_y;
     int16_t pos_z;
     uint8_t data;
 };
-
-static Vertex CreateVertex(glm::i16vec3 position, int8_t normal_x, int8_t normal_y, int8_t normal_z, uint8_t ao_id) {
-    uint8_t data = 0;
-    data |= (normal_x + 1) << 6;
-    data |= (normal_y + 1) << 4;
-    data |= (normal_z + 1) << 2;
-    data |= ao_id;
-
-    return Vertex {
-        .pos_x = position.x,
-        .pos_y = position.y,
-        .pos_z = position.z,
-        .data = data
-    };
-}
 
 struct Faces {
     bool front = true;
@@ -46,6 +33,21 @@ struct AO {
     uint8_t front[4]  = {3, 3, 3, 3};
     uint8_t back[4]   = {3, 3, 3, 3};
 };
+
+static Vertex CreateVertex(glm::i16vec3 position, int8_t normal_x, int8_t normal_y, int8_t normal_z, uint8_t ao_id) {
+    uint8_t data = 0;
+    data |= (normal_x + 1) << 6;
+    data |= (normal_y + 1) << 4;
+    data |= (normal_z + 1) << 2;
+    data |= ao_id;
+
+    return Vertex {
+        .pos_x = position.x,
+        .pos_y = position.y,
+        .pos_z = position.z,
+        .data = data
+    };
+}
 
 bool App::Init() {
     if (!IEngine::Init())
@@ -171,9 +173,9 @@ static bool CubeIsValid(int x, int y, int z) {
         int cz = z % 3;
 
         if (
-            (cx % 3 == 1 and cy % 3 == 1) ||
-            (cx % 3 == 1 and cz % 3 == 1) ||
-            (cy % 3 == 1 and cz % 3 == 1)
+            ((cx % 3 == 1) && (cy % 3 == 1)) ||
+            ((cx % 3 == 1) && (cz % 3 == 1)) ||
+            ((cy % 3 == 1) && (cz % 3 == 1))
         ) {
             return false;
         }
@@ -409,6 +411,8 @@ void App::OnUpdate() {
         m_iterations--;
     }
 
+    m_iterations = std::min(m_iterations, MAX_ITERATIONS);
+
     if (Input::JustPressed(sge::Key::Tab)) {
         m_method = m_method == Method::SDF ? Method::Polygons : Method::SDF;
         m_iterations = 0;
@@ -497,10 +501,10 @@ static size_t GetVisibleFacesCount(uint32_t iterations) {
 void App::OnPostUpdate() {
     if (m_method == Method::Polygons) {
         if (m_iterations >= m_menger_sponge_meshes.size()) {
-            const size_t bytes = GetVisibleFacesCount(m_iterations) * 6 * sizeof(Vertex);
+            const size_t vertices_count = GetVisibleFacesCount(m_iterations) * 6;
 
             std::vector<Vertex> vertices;
-            vertices.reserve(bytes);
+            vertices.reserve(vertices_count);
 
             GenerateMengerSponge(vertices, m_iterations, glm::vec3(0.0f), glm::vec3(2.0f));
             SGE_LOG_INFO("Iteration: {}, Vertex count: {}, Bytes: {}", m_iterations, vertices.size(), vertices.size() * sizeof(Vertex));

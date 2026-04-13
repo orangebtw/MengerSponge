@@ -25,7 +25,7 @@ VSOutput VS(VSInput inp) {
     int normal_x = ((inp.data >> 6) & 0x3) - 1;
     int normal_y = ((inp.data >> 4) & 0x3) - 1;
     int normal_z = ((inp.data >> 2) & 0x3) - 1;
-    int ao_id = inp.data & 0x3;
+    uint ao_id = inp.data & 0x3;
 
     VSOutput outp;
     outp.normal = float3(normal_x, normal_y, normal_z);
@@ -45,6 +45,8 @@ float4 PS(VSOutput inp, uint primitiveId : SV_PrimitiveID) : SV_Target {
 
     float diffuse = max(dot(normal, lightDir), 0.0);
 
-    return float4(1.0, 1.0, 1.0, 1.0) * (diffuse + ambient) * inp.ao;
-    // return float4(1.0, 1.0, 1.0, 1.0) * inp.ao;
+    float3 color = float3(1.0, 1.0, 1.0) * (diffuse + ambient) * inp.ao;
+    color = pow(color, 0.454545);
+
+    return float4(color, 1.0);
 }

@@ -16,5 +16,8 @@ void main() {
 
     float diffuse = max(dot(normal, lightDir), 0.0);
 
-    fragColor = vec4(1.0, 1.0, 1.0, 1.0) * (diffuse + ambient) * vAo;
+    vec3 color = vec3(1.0, 1.0, 1.0) * (diffuse + ambient) * vAo;
+    color = pow(color, vec3(0.454545));
+
+    fragColor = vec4(color, 1.0);
 }
