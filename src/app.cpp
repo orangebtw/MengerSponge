@@ -148,8 +148,16 @@ static void GenerateCube(std::vector<Vertex>& vertices, glm::vec3 pos, glm::vec3
     }
 }
 
-static int powi(int base, uint32_t power) {
+static int pow_i32(int base, uint32_t power) {
     int result = 1;
+    for (uint32_t i = 0; i < power; ++i) {
+        result *= base;
+    }
+    return result;
+}
+
+static uint32_t pow_u32(uint32_t base, uint32_t power) {
+    uint32_t result = 1;
     for (uint32_t i = 0; i < power; ++i) {
         result *= base;
     }
@@ -252,9 +260,9 @@ static void GenerateMengerSponge(std::vector<Vertex>& vertices, uint32_t iterati
     glm::vec3 pos = position;
     glm::vec3 s = size;
 
-    int mx = powi(3, iters);
-    int my = powi(3, iters);
-    int mz = powi(3, iters);
+    int mx = pow_i32(3, iters);
+    int my = pow_i32(3, iters);
+    int mz = pow_i32(3, iters);
 
     for (int x = 0; x < mx; ++x) {
         for (int y = 0; y < my; ++y) {
@@ -482,10 +490,18 @@ void App::OnUpdate() {
     }
 }
 
+static size_t GetVisibleFacesCount(uint32_t iterations) {
+    return 2 * pow_u32(20, iterations) + 4 * pow_u32(8, iterations);
+}
+
 void App::OnPostUpdate() {
     if (m_method == Method::Polygons) {
         if (m_iterations >= m_menger_sponge_meshes.size()) {
+            const size_t bytes = GetVisibleFacesCount(m_iterations) * 6 * sizeof(Vertex);
+
             std::vector<Vertex> vertices;
+            vertices.reserve(bytes);
+
             GenerateMengerSponge(vertices, m_iterations, glm::vec3(0.0f), glm::vec3(2.0f));
             SGE_LOG_INFO("Iteration: {}, Vertex count: {}, Bytes: {}", m_iterations, vertices.size(), vertices.size() * sizeof(Vertex));
 
