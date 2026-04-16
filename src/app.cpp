@@ -59,6 +59,7 @@ bool App::Init() {
     m_command_queue = GetRenderContext()->GetCommandQueue();
 
     sge::WindowSettings window_settings;
+    window_settings.title = "Menger Sponge";
     window_settings.width = 1280;
     window_settings.height = 720;
     window_settings.vsync = true;
@@ -411,7 +412,9 @@ void App::OnUpdate() {
         m_iterations--;
     }
 
-    m_iterations = std::min(m_iterations, MAX_ITERATIONS);
+    if (m_method == Method::Polygons) {
+        m_iterations = std::min(m_iterations, MAX_ITERATIONS);
+    }
 
     if (Input::JustPressed(sge::Key::Tab)) {
         m_method = m_method == Method::SDF ? Method::Polygons : Method::SDF;
@@ -457,7 +460,7 @@ void App::OnUpdate() {
 
     float speed = 1.0f;
     if (Input::Pressed(sge::Key::LeftCtrl)) {
-        speed *= 0.01f;
+        speed *= 0.075f;
     }
 
     if (Input::Pressed(sge::Key::W)) {

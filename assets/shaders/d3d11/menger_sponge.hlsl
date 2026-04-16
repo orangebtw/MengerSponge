@@ -19,16 +19,19 @@ VSOutput VS(VSInput inp) {
     return outp;
 }
 
-static const int MAX_STEPS = 300;
+static const int MAX_STEPS = 256;
 static const float MAX_DIST = 100.0;
 static const float EPSILON  = 1e-5;
 static const float SURF_DIST = 0.001;
 static const float SHADOW_BIAS = EPSILON * 50;
 
 static const float AO_SAMPLES = 10.0;
-static const float AO_FACTOR = 1.0;
+static const float AO_FACTOR = 0.25;
 
-static const float3 LIGHT_POS = float3(3.0, 3.0, 0.0);
+static const float3 LIGHT_POS = float3(2.0, 2.0, 0.0);
+static const float AMBIENT_LIGHT = 0.2;
+
+static const float PI = 3.14159265359;
 
 float GetSphere(float3 p, float r) {
     return length(p) - r;
@@ -47,31 +50,30 @@ float GetCross(float3 p, float size) {
     return min(min(bx, by), bz);
 }
 
+float3 mod(float3 x, float3 y) {
+    return x - y * floor(x / y);
+}
+
 float GetInnerMenger(float3 p, float size) {
     float d = EPSILON;
     float scale = 1.0;
     
     for (int i = 0; i < uIterations; ++i) {
         float r = size / scale;
-        float3 q = fmod(p + r, 2.0 * r) - r;
+        float3 q = mod(p + r, 2.0 * r) - r;
         d = min(d, GetCross(q, r));
         scale *= 3.0;
     }
     return d;
 }
 
-float4 Blend(float a, float b, float3 colA, float3 colB, float k) {
-    float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
-    float blendDst = lerp( b, a, h ) - k*h*(1.0-h);
-    float3 blendCol = lerp(colB,colA,h);
-    return float4(blendCol, blendDst);
-}
-
 float4 SceneInfo(float3 p) {
-    float size = 0.5;
     float d1 = max(GetBox(p, 0.5), -GetInnerMenger(p, 0.5));
-    float d2 = GetSphere(p - LIGHT_POS + float3(0.25, 0.25, 0.25), 0.1);
-    return Blend(d1, d2, float3(1.0, 1.0, 1.0), float3(1.0, 1.0, 0.0), 1.0);
+    float d2 = GetSphere(p - LIGHT_POS + float3(0.5, 0.5, 0.0), 0.1);
+    if (d1 < d2)
+        return float4(1.0, 1.0, 1.0, d1);
+    else
+        return float4(1.0, 1.0, 0.0, d2);
 
     // float d = 0.0;
     // float cr = GetCross(p, size);
@@ -86,16 +88,6 @@ float4 SceneInfo(float3 p) {
     // }
 
     // return float4(float3(1.0), d);
-}
-
-float GetAO(float3 pos, float3 norm) {
-    float result = 1.0;
-    float s = -AO_SAMPLES;
-    float unit = 1.0 / AO_SAMPLES;
-    for (float i = unit; i < 1.0; i += unit) {
-        result -= pow(1.6, i * s) * (i - SceneInfo(pos + i * norm).w);
-    }
-    return result * AO_FACTOR;
 }
 
 float3 GetNormal(float3 p) {
@@ -127,13 +119,65 @@ float GetLight(float3 p, float3 lightPos) {
     float3 l = normalize(lightPos-p);
     float3 n = GetNormal(p);
     
-    float dif = clamp(dot(n, l) * 0.5 + 0.5, 0., 1.);
+    // float dif = clamp(dot(n, l) * 0.5 + 0.5, 0., 1.);
+    float dif = max(dot(n, l), 0.0);
     // shadow
-    float d = RayMarch(p+n*SURF_DIST*2., l, MAX_STEPS).w;
-    if (d < length(lightPos - p)) dif *= .5;
+    float d = RayMarch(p + n*SURF_DIST, l, MAX_STEPS).w;
+    if (d < length(lightPos - p))
+        dif *= 0.5;
     
     return dif;
 }
+
+float3 randomSphereDir(float2 rnd)
+{
+    float s = rnd.x*PI*2.;
+    float t = rnd.y*2.-1.;
+    return float3(sin(s), cos(s), t) / sqrt(1.0 + t * t);
+}
+
+#define HASHSCALE1 .1231
+float hash(float p)
+{
+	float3 p3  = frac(float3(p, p, p) * HASHSCALE1);
+    p3 += dot(p3, p3.yzx + 19.19);
+    return frac((p3.x + p3.y) * p3.z);
+}
+
+float3 randomHemisphereDir(float3 dir, float i)
+{
+    float3 v = randomSphereDir( float2(hash(i+1.), hash(i+2.)) );
+    return v * sign(dot(v, dir));
+}
+
+float GetAO( in float3 p, in float3 n, in float maxDist, in float falloff )
+{
+    const int nbIte = 32;
+    const float nbIteInv = 1./float(nbIte);
+    const float rad = 1.-1.*nbIteInv; //Hemispherical factor (self occlusion correction)
+
+    float ao = 0.0;
+
+    for( int i=0; i<nbIte; i++ )
+    {
+        float l = hash(float(i))*maxDist;
+        float3 rd = normalize(n+randomHemisphereDir(n, l )*rad)*l; // mix direction with the normal for self occlusion problems!
+
+        ao += (l - max(SceneInfo( p + rd ).w,0.)) / maxDist * falloff;
+    }
+
+    return clamp( 1.-ao*nbIteInv, 0., 1.);
+}
+
+// float GetAO(float3 pos, float3 norm) {
+//     float result = 1.0;
+//     float s = -AO_SAMPLES;
+//     float unit = 1.0 / AO_SAMPLES;
+//     for (float i = unit; i < 1.0; i += unit) {
+//         result -= pow(1.6, i * s) * (i - SceneInfo(pos + i * norm).w);
+//     }
+//     return result;
+// }
 
 float4 PS(VSOutput inp) : SV_Target {
     float3 col = float3(0.0, 0.0, 0.0);
@@ -147,8 +191,11 @@ float4 PS(VSOutput inp) : SV_Target {
     float4 res = RayMarch(origin, dir, MAX_STEPS);
     if (res.w < MAX_DIST) {
         float3 p = origin + dir * res.w;
-        float ao = GetLight(p, LIGHT_POS);
-        col = ao * res.rgb;
+
+        float direct_light = GetLight(p, LIGHT_POS);
+        float ambient = GetAO(p, GetNormal(p), 4.0, 2.0) * 0.5;
+
+        col = min(ambient + direct_light, 1.0) * res.rgb;
     }
 
     col = pow(col, float3(0.4545, 0.4545, 0.4545));
