@@ -36,7 +36,7 @@ private:
 
 private:
     struct Mesh {
-        LLGL::Buffer* vertex_buffer = nullptr;
+        sge::Unique<LLGL::Buffer> vertex_buffer = nullptr;
         size_t vertex_count = 0;
     };
 
@@ -49,25 +49,25 @@ private:
     glm::mat4 m_inv_view_matrix = glm::mat4(1.0f);
     glm::mat4 m_inv_projection_matrix = glm::mat4(1.0f);
 
-    glm::vec3 m_camera_pos = glm::vec3(0.0f);
-    glm::vec3 m_camera_forward = glm::vec3(1.0, 0.0, 0.0);
-
-    std::shared_ptr<sge::GlfwWindow> m_primary_window;
-    LLGL::CommandBuffer* m_command_buffer = nullptr;
-    LLGL::CommandQueue* m_command_queue = nullptr;
-    LLGL::Buffer* m_sdf_vertex_buffer = nullptr;
-
     std::vector<Mesh> m_menger_sponge_meshes;
-
     LLGL::VertexFormat m_vertex_format;
 
+    sge::Unique<LLGL::CommandBuffer> m_command_buffer = nullptr;
+    sge::Unique<LLGL::Buffer> m_sdf_vertex_buffer = nullptr;
+    std::shared_ptr<sge::GlfwWindow> m_primary_window;
+    
+    glm::vec3 m_camera_pos = glm::vec3(0.0f);
+    glm::vec3 m_camera_forward = glm::vec3(1.0, 0.0, 0.0);
+    LLGL::CommandQueue* m_command_queue = nullptr;
+
     AppConfig m_config;
+
+    sge::Handle<LLGL::PipelineState> m_sdf_pipeline;
+    sge::Handle<LLGL::PipelineState> m_polygon_pipeline;
 
     float m_yaw = 0.0f;
     float m_pitch = 0.0f;
 
-    uint32_t m_sdf_pipeline_id = -1;
-    uint32_t m_vertex_pipeline_id = -1;
     uint32_t m_iterations = 0;
 
     Method m_method = Method::SDF;

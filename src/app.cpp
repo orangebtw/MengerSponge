@@ -333,20 +333,20 @@ bool App::InitSDFPipeline() {
         LLGL::UniformDescriptor("uIterations", LLGL::UniformType::Int1),
     };
 
-    LLGL::Shader* vertexShader = GetRenderContext()->LoadShaderFromFile(sge::ShaderPath(sge::ShaderType::Vertex, "menger_sponge"), {}, vertexFormat.attributes);
-    if (vertexShader == nullptr)
+    sge::Ref<LLGL::Shader> vertexShader = GetRenderContext()->LoadShaderFromFile(sge::ShaderPath(sge::ShaderType::Vertex, "menger_sponge"), {}, vertexFormat.attributes);
+    if (!vertexShader)
         return false;
 
-    LLGL::Shader* pixelShader = GetRenderContext()->LoadShaderFromFile(sge::ShaderPath(sge::ShaderType::Fragment, "menger_sponge"));
-    if (pixelShader == nullptr)
+    sge::Ref<LLGL::Shader> pixelShader = GetRenderContext()->LoadShaderFromFile(sge::ShaderPath(sge::ShaderType::Fragment, "menger_sponge"));
+    if (!pixelShader)
         return false;
 
     sge::GraphicsPipelineConfig pipelineConfig;
-    pipelineConfig.layout = GetRenderContext()->GetLLGLContext()->CreatePipelineLayout(pipelineLayoutDesc);
+    pipelineConfig.layout = GetRenderContext()->CreatePipelineLayout(pipelineLayoutDesc);
     pipelineConfig.vertexShader = vertexShader;
     pipelineConfig.pixelShader = pixelShader;
 
-    m_sdf_pipeline_id = GetRenderContext()->AddPipelineConfig(pipelineConfig);
+    m_sdf_pipeline = GetRenderContext()->CreatePipelineState(pipelineConfig);
 
     return true;
 }
@@ -362,12 +362,12 @@ bool App::InitVertexPipeline() {
     std::vector<Vertex> vertices;
     GenerateMengerSponge(vertices, m_iterations, glm::vec3(0.0f), glm::vec3(2.0f));
 
-    LLGL::Buffer* vertex_buffer = GetRenderContext()->CreateVertexBuffer(vertices, m_vertex_format);
-    if (vertex_buffer == nullptr)
+    sge::Unique<LLGL::Buffer> vertex_buffer = GetRenderContext()->CreateVertexBuffer(vertices, m_vertex_format);
+    if (!vertex_buffer)
         return false;
 
     m_menger_sponge_meshes.push_back(Mesh{
-        .vertex_buffer = vertex_buffer,
+        .vertex_buffer = std::move(vertex_buffer),
         .vertex_count = vertices.size()
     });
 
@@ -378,24 +378,23 @@ bool App::InitVertexPipeline() {
         LLGL::UniformDescriptor("uIterations", LLGL::UniformType::Int1),
     };
 
-    LLGL::Shader* vertexShader = GetRenderContext()->LoadShaderFromFile(sge::ShaderPath(sge::ShaderType::Vertex, "basic"), {}, m_vertex_format.attributes);
-    if (vertexShader == nullptr)
+    sge::Ref<LLGL::Shader> vertexShader = GetRenderContext()->LoadShaderFromFile(sge::ShaderPath(sge::ShaderType::Vertex, "basic"), {}, m_vertex_format.attributes);
+    if (!vertexShader)
         return false;
 
-    LLGL::Shader* pixelShader = GetRenderContext()->LoadShaderFromFile(sge::ShaderPath(sge::ShaderType::Fragment, "basic"));
-    if (pixelShader == nullptr)
+    sge::Ref<LLGL::Shader> pixelShader = GetRenderContext()->LoadShaderFromFile(sge::ShaderPath(sge::ShaderType::Fragment, "basic"));
+    if (!pixelShader)
         return false;
 
     sge::GraphicsPipelineConfig pipelineConfig;
-    pipelineConfig.layout = GetRenderContext()->GetLLGLContext()->CreatePipelineLayout(pipelineLayoutDesc);
+    pipelineConfig.layout = GetRenderContext()->CreatePipelineLayout(pipelineLayoutDesc);
     pipelineConfig.vertexShader = vertexShader;
     pipelineConfig.pixelShader = pixelShader;
     pipelineConfig.cullMode = LLGL::CullMode::Back;
-    pipelineConfig.frontCCW = true;
     pipelineConfig.depth.testEnabled = true;
     pipelineConfig.depth.writeEnabled = true;
 
-    m_vertex_pipeline_id = GetRenderContext()->AddPipelineConfig(pipelineConfig);
+    m_polygon_pipeline = GetRenderContext()->CreatePipelineState(pipelineConfig);
 
     return true;
 }
@@ -534,7 +533,7 @@ void App::OnRender(const std::shared_ptr<sge::GlfwWindow> &window) {
                 m_command_buffer->Clear(LLGL::ClearFlags::Color, LLGL::ClearValue(0.0f, 0.0f, 0.0f, 1.0f));
                 m_command_buffer->SetViewport(windowSize);
 
-                m_command_buffer->SetPipelineState(GetRenderContext()->GetOrCreatePipeline(m_sdf_pipeline_id));
+                m_command_buffer->SetPipelineState(GetRenderContext()->GetOrCreatePipeline(m_sdf_pipeline));
                 m_command_buffer->SetVertexBuffer(*m_sdf_vertex_buffer);
 
                 m_command_buffer->SetUniforms(0, &m_inv_view_matrix, sizeof(m_inv_view_matrix));
@@ -551,7 +550,7 @@ void App::OnRender(const std::shared_ptr<sge::GlfwWindow> &window) {
                 m_command_buffer->Clear(LLGL::ClearFlags::ColorDepth, LLGL::ClearValue(0.4f, 0.4f, 0.4f, 1.0f, 1.0f));
                 m_command_buffer->SetViewport(windowSize);
 
-                m_command_buffer->SetPipelineState(GetRenderContext()->GetOrCreatePipeline(m_vertex_pipeline_id));
+                m_command_buffer->SetPipelineState(GetRenderContext()->GetOrCreatePipeline(m_polygon_pipeline));
                 m_command_buffer->SetVertexBuffer(*mesh.vertex_buffer);
 
                 m_command_buffer->SetUniforms(0, &m_view_matrix, sizeof(m_view_matrix));
